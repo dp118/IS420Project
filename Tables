@@ -1,0 +1,312 @@
+drop table message cascade constraints; 
+drop table payment cascade constraints; 
+drop table review cascade constraints; 
+drop table order_dish cascade constraints; 
+drop table orders cascade constraints;
+drop table cart_dish cascade constraints;
+drop table cart cascade constraints; 
+drop table dish cascade constraints;
+drop table restaurant_category cascade constraints;
+drop table restaurant cascade constraints; 
+drop table category cascade constraints; 
+drop table salestax cascade constraints; 
+drop table customer_discount cascade constraints; 
+drop table discount cascade constraints; 
+drop table customer cascade constraints; 
+
+-- customer ID, name, address, zip code, state, email, credit 
+create table customer
+(cid int,
+cname varchar(50),
+caddress varchar(50),
+czip int,
+cstate varchar(2),
+cemail varchar(50),
+credit int,
+primary key (cid)
+);
+
+-- data insertion for customer
+insert into customer
+values(1, 'Nancy Regan', '123 main st', 21774, 'MD', 'nancyr@hotmail.com', 0);
+insert into customer
+values(2, 'Charles Mingus', '1000 hilltop circle', 21250, 'MD', 'charlesm@gmail.com', 25);
+insert into customer
+values(3, 'Franky Robo', '900 walker ave', 21228, 'MD', 'frankyfrank@gmail.com', 0);
+
+-- discount ID, discount description, discount type (1 means free delivery, 
+-- 2 means a fixed percent off the total charge, 3 means a fixed amount off the total charge (say $20)), and discount amount
+create table discount
+(did int,
+description varchar(100),
+dtype int
+    check (dtype in (1,2,3)), -- 1 means free delivery, 2 means a fixed percent off the total charge, 3 means a fixed amount off the total charge
+damount int,
+primary key (did)
+);
+
+-- data insertion for discount
+insert into discount
+values(1, 'Half off coupon', 2, 0.5);
+insert into discount
+values(2, 'Free delivery coupon', 1, null);
+insert into discount
+values(3, '5 dollars off coupon', 3, 5);
+
+
+create table customer_discount
+(cid int,
+did int,
+startdate date,
+enddate date,
+damount int,
+primary key (cid, did),
+foreign key (cid) references customer(cid),
+foreign key (did) references discount(did)
+);
+
+-- data insertion customer discount
+insert into customer_discount
+values(1, 1, DATE '2023-2-14', DATE '2023-2-28', 2);
+insert into customer_discount
+values(2, 2, DATE '2023-3-7', DATE '2023-3-14', 1);
+insert into customer_discount
+values(3, 3, DATE '2023-1-1', DATE '2023-1-31', 3);
+
+
+-- tax rate : state, rate
+create table salestax
+(state varchar(2),
+taxrate int
+);
+
+-- data insertion for sales tax
+insert into salestax
+values('MD', 0.06);
+insert into salestax
+values('VT', 0.05);
+insert into salestax
+values('DE', 0);
+
+
+-- category ID, category name
+create table category
+(catid int,
+catname varchar(25),
+primary key (catid)
+);
+
+-- data insertion category
+insert into category
+values(1, 'fast food');
+insert into category
+values(2, 'Mexican');
+insert into category
+values(3, 'Italian');
+
+-- restaurant ID, restaurant name, address, phone number, 
+--current status (open or closed), zip code, state, average wait time, and average review score
+create table restaurant
+(rid int,
+rname varchar(50),
+raddress varchar(50),
+rnumber varchar(10),
+rzip int,
+rstatus varchar (10),
+rstate varchar(2),
+avgwaittime int,
+avgreviewscore int,
+primary key (rid)
+);
+
+-- data insertion for restaurant
+insert into restaurant
+values(1, 'Burger King', '5549 burger dr', '3014958956', 25987, 'open', 'MD', 5, 3);
+insert into restaurant
+values(2, 'Cava', '1022 keyway cir', '4439866758', 22222, 'open', 'PA', 5, 4);
+insert into restaurant
+values(3, 'Bonchon', '1234 chicken way','2405564849' , 54312, 'open', 'WV', 3, 4);
+
+
+-- The system stores the categories for each restaurant.
+create table restaurant_category
+(rid int,
+catid int,
+primary key (rid, catid),
+foreign key (rid) references restaurant(rid),
+foreign key (catid) references category(catid)
+);
+
+-- data insertion for restaurant category
+insert into restaurant_category
+values(1, 1);
+insert into restaurant_category
+values(2, 2);
+insert into restaurant_category
+values(3, 3);
+
+-- Each restaurant has a number of dishes. Each dish has a dish ID, restaurant ID, dish name, price. 
+create table dish
+(dishid int,
+rid int,
+dishname varchar(50),
+dishprice int,
+primary key (dishid),
+foreign key (rid) references restaurant (rid)
+);
+
+-- data insertion for dish
+insert into dish
+values(1, 1, 'Whopper', 5);
+insert into dish
+values(2, 2, 'Grains Bowl', 12);
+insert into dish
+values(3, 3, '4-Piece Fried Chicken', 10);
+
+
+-- add one or more dishes a shopping cart. The cart table has cart id, customer id, restaurant id
+create table cart
+(cartid int,
+cid int,
+rid int,
+primary key (cartid),
+foreign key (cid) references customer(cid),
+foreign key (rid) references restaurant(rid)
+);
+
+-- data insertion for cart
+insert into cart
+values(1, 1, 1);
+insert into cart
+values(2, 2, 2);
+insert into cart
+values(3, 3, 3);
+
+-- stores information about dishes put in a cart.
+-- same dish can also appear multiple times in the same cart so you can use a quantity column
+create table cart_dish
+(cartid int,
+dishid int,
+cdquantity int,
+primary key (cartid, dishid),
+foreign key (cartid) references cart(cartid),
+foreign key (dishid) references dish(dishid)
+);
+
+-- data insertion for cart dish
+insert into cart_dish
+values(1,1,2);
+insert into cart_dish
+values(2,2,1);
+insert into cart_dish
+values(3,3,1);
+
+-- order has order ID, customer ID, restaurant ID, order time (time order placed), delivery time (null if not  delivered yet), estimated time it is ready, 
+-- status (in progress, delivered or canceled), payment status (paid or not paid), total cost. The order also contains a flag indicating delivery method (1 is delivery, 2 as pickup)
+create table orders
+(oid int,
+cid int,
+rid int,
+ordertime timestamp,
+deliverytime timestamp,
+estimatedtime timestamp,
+status varchar(20)
+    check (status in ('in progress', 'delivered', 'canceled')),
+paymentstatus varchar(20)
+    check (paymentstatus in ('paid', 'not paid')),
+totalcost int,
+deliverymethod int
+    check (deliverymethod in (1,2)),
+primary key (oid),
+foreign key (cid) references customer(cid),
+foreign key (rid) references restaurant(rid)
+);
+
+-- data insertion for orders
+insert into orders
+values(1, 1, 1, timestamp '2023-3-8 13:10:15', timestamp '2023-03-08 03:16:15', timestamp '2023-3-8 03:15:00', 'delivered', 'paid', 10, 2);
+insert into orders
+values(2, 2, 2, timestamp '2023-3-8 13:29:35', null, timestamp '2023-3-8 03:45:00', 'in progress', 'not paid', 12, 1);
+insert into orders
+values(3, 3, 3, timestamp '2023-3-8 13:00:55', null, timestamp '2023-3-8 13:15:00', 'canceled', 'not paid', 10, 2);
+
+--store dishes in an order, including order id and dish id.
+create table order_dish
+(oid int,
+dishid int,
+odquantity int,
+primary key (oid,dishid),
+foreign key (oid) references orders(oid),
+foreign key (dishid) references dish(dishid)
+);
+
+-- data insertion for order dish
+insert into order_dish
+values(1, 1, 2);
+insert into order_dish
+values(2, 2, 1);
+insert into order_dish
+values(3, 3, 1);
+
+-- Each customer can leave reviews for a restaurant, 
+-- including review ID, customer ID, restaurant ID, review date, review score, comments. 
+create table review
+(revid int,
+cid int,
+rid int,
+revdate date,
+revscore int,
+comments varchar(100),
+primary key (revid),
+foreign key (cid) references customer(cid),
+foreign key (rid) references restaurant(rid)
+);
+
+-- data insertion for review
+insert into review
+values(1, 1, 1, date '2022-03-09', 3, 'Food was quick, but location was a bit messy');
+insert into review
+values(2, 2, 2, date '2022-03-10', 4.5, 'Food and service was good. A bit pricey.');
+insert into review
+values(3, 3, 3, date '2022-03-15', 5, 'Everything was great');
+
+--The order also contains payment record for a customer, including payment ID, customer ID, payment time, order ID, 
+--payment amount, payment method (only contains whether it is credit/debit card, apple pay, or paypal)
+create table payment
+(pid int,
+cid int,
+ptime timestamp,
+oid int,
+pamount int,
+pmethod varchar(25)
+    check (pmethod in ('credit/debit card', 'apple pay', 'paypal')),
+primary key (pid),
+foreign key (cid) references customer(cid),
+foreign key (oid) references orders(oid)
+);
+
+-- data insertion for payment
+insert into payment
+values(1, 1, timestamp '2023-03-08 13:10:15', 1, 10, 'paypal');
+insert into payment
+values(2, 2, null, 2, 12, null);
+insert into payment
+values(3, 3, null, 1, 10, null);
+
+-- message table which contains message ID, customer ID, message time, and message body
+create table message
+(mid int,
+cid int,
+mtime timestamp,
+mbody varchar(100),
+primary key (mid),
+foreign key (cid) references customer(cid)
+);
+
+-- data insertion for message
+insert into message
+values(1, 1, timestamp '2023-03-08 13:10:15', 'No mayo on either sandwich please');
+insert into message
+values(2, 2, timestamp '2023-03-08 13:29:35', 'Extra pita please');
+insert into message
+values(3, 3, timestamp '2023-03-08 13:00:55', '2 extra sauce packets please');
