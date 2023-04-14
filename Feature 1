@@ -1,0 +1,33 @@
+drop sequence eid_seq;
+-- sequence for new customers
+create sequence eid_seq START WITH 11;
+
+create or replace procedure NewCustomer(v_name in varchar2, v_address in varchar2, 
+    v_zip in int, v_state in varchar2, v_email in varchar2)
+as
+--cursor c1 is 
+v_count int;
+v_eid int;
+begin
+    -- checks for existing client with email
+    select count(*) into v_count from customer where cemail = v_email; 
+    if v_count = 1 then 
+    dbms_output.put_line('The client already exists');
+    -- update client data: address, state, and zip
+    update customer
+    set caddress = v_address, cstate = v_state, czip = v_zip
+    where cemail = v_email;
+    else
+    -- create new client, credit is 0
+    v_eid := eid_seq.nextval;
+    insert into customer values (v_eid, v_name, v_address, v_zip, v_state, v_email, 0);
+    dbms_output.put_line('The customer id is ' || v_eid);
+    end if;
+end;
+/
+--Testing Regular Case:
+exec NewCustomer( 'Derrick Brown', '123 Admiral Lane', 21765, 'MD', 'derrickb@hotmail.com');
+
+--Testing Existing case:
+--Adding same customer twice
+exec NewCustomer( 'Derrick Brown', '123 Admiral Lane', 21765, 'MD', 'derrickb@hotmail.com');
