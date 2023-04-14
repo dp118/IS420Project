@@ -53,7 +53,6 @@ values(2, 'Free delivery coupon', 1, null);
 insert into discount
 values(3, '5 dollars off coupon', 3, 5);
 
-
 create table customer_discount
 (cid int,
 did int,
@@ -73,7 +72,6 @@ values(2, 2, DATE '2023-3-7', DATE '2023-3-14', 1);
 insert into customer_discount
 values(3, 3, DATE '2023-1-1', DATE '2023-1-31', 3);
 
-
 -- tax rate : state, rate
 create table salestax
 (state varchar(2),
@@ -87,7 +85,6 @@ insert into salestax
 values('VT', 0.05);
 insert into salestax
 values('DE', 0);
-
 
 -- category ID, category name
 create table category
@@ -127,7 +124,6 @@ values(2, 'Cava', '1022 keyway cir', '4439866758', 22222, 'open', 'PA', 5, 4);
 insert into restaurant
 values(3, 'Bonchon', '1234 chicken way','2405564849' , 54312, 'open', 'WV', 3, 4);
 
-
 -- The system stores the categories for each restaurant.
 create table restaurant_category
 (rid int,
@@ -162,7 +158,6 @@ insert into dish
 values(2, 2, 'Grains Bowl', 12);
 insert into dish
 values(3, 3, '4-Piece Fried Chicken', 10);
-
 
 -- add one or more dishes a shopping cart. The cart table has cart id, customer id, restaurant id
 create table cart
